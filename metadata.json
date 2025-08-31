@@ -1,0 +1,5 @@
+{
+  "name": "Tempest Share - Global Clipboard",
+  "description": "A temporary file sharing application that acts as a global clipboard. Upload a file, get a unique code, and use the code on another device to download it. Files are automatically deleted after 10 minutes.",
+  "requestFramePermissions": []
+}
