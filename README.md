@@ -1,20 +1,32 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Tempest Share - Global Clipboard
 
-# Run and deploy your AI Studio app
+A peer-to-peer file sharing application that works as your temporary global clipboard. Files are sent directly between devices without storing them on any server.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1Je2KTaNMzVHx0tWTO-cirNbefKCRJuzm
+- 🔒 **Secure P2P transfers** - Files go directly between devices
+- 🌐 **No server storage** - Nothing is saved anywhere
+- ⚡ **Real-time transfers** - Share files instantly with a simple code
+- 📱 **Cross-platform** - Works on any device with a web browser
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+
+2. Run the app:
+   ```bash
+   npm run dev
+   ```
+
+3. Open `http://localhost:5173` in your browser
+
+## How it Works
+
+1. **Send**: Select a file and get a unique sharing code
+2. **Receive**: Enter the code on another device to receive the file
+3. Files are transferred directly between devices using WebRTC
