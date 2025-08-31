@@ -108,6 +108,29 @@ const SendPanel: React.FC<SendPanelProps> = ({ onShareFile, status, onCancel }) 
       default: // idle, error
         return (
           <>
+            {/* Error display - show at top for visibility */}
+            {status.mode === 'error' && (
+              <div className="mb-4 bg-red-900/50 border border-red-500 text-red-300 px-4 py-3 rounded-lg">
+                <div className="flex items-center mb-2">
+                  <AlertIcon className="w-5 h-5 mr-3"/>
+                  <span>{status.message}</span>
+                </div>
+                <button
+                  onClick={resetState}
+                  className="text-sm bg-red-600 hover:bg-red-500 px-3 py-1 rounded transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+            
+            {status.mode === 'idle' && status.message && (
+                 <div className="mb-4 bg-blue-900/50 border border-blue-500 text-blue-300 px-4 py-3 rounded-lg flex items-center">
+                    <AlertIcon className="w-5 h-5 mr-3"/>
+                    <span>{status.message}</span>
+                </div>
+            )}
+            
             <div 
               className="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center cursor-pointer hover:border-cyan-400 hover:bg-slate-800 transition-colors"
               onClick={() => fileInputRef.current?.click()}
@@ -137,7 +160,6 @@ const SendPanel: React.FC<SendPanelProps> = ({ onShareFile, status, onCancel }) 
                     aria-describedby="code-error"
                     aria-invalid={status.mode === 'error'}
                   />
-                   {status.mode === 'error' && <p id="code-error" className="mt-2 text-sm text-red-400">{status.message}</p>}
                 </div>
 
                 <button
@@ -148,12 +170,6 @@ const SendPanel: React.FC<SendPanelProps> = ({ onShareFile, status, onCancel }) 
                   Share File
                 </button>
               </form>
-            )}
-            {status.mode === 'idle' && status.message && (
-                 <div className="mt-4 bg-blue-900/50 border border-blue-500 text-blue-300 px-4 py-3 rounded-lg flex items-center">
-                    <AlertIcon className="w-5 h-5 mr-3"/>
-                    <span>{status.message}</span>
-                </div>
             )}
           </>
         );

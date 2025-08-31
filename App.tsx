@@ -11,9 +11,11 @@ const App: React.FC = () => {
   const [status, setStatus] = useState<Status>({ mode: 'idle' });
   const [receivedFile, setReceivedFile] = useState<SharedFile | null>(null);
   
+  
   const peerRef = useRef<Peer | null>(null);
   const connectionRef = useRef<DataConnection | null>(null);
   const fileChunksRef = useRef<ArrayBuffer[]>([]);
+  const errorStateRef = useRef<boolean>(false);
 
   const cleanup = useCallback(() => {
     connectionRef.current?.close();
@@ -21,88 +23,118 @@ const App: React.FC = () => {
     connectionRef.current = null;
     peerRef.current = null;
     fileChunksRef.current = [];
+    errorStateRef.current = false;
     setStatus({ mode: 'idle' });
     setReceivedFile(null);
   }, []);
 
   const shareFile = useCallback((file: File, code: string) => {
-    cleanup();
+    // Clear error state at start
+    errorStateRef.current = false;
+    
+    // Clean up any existing connections but don't reset status yet
+    connectionRef.current?.close();
+    peerRef.current?.destroy();
+    connectionRef.current = null;
+    peerRef.current = null;
+    fileChunksRef.current = [];
     setReceivedFile(null);
 
-    const peer = new Peer(code);
-    peerRef.current = peer;
+    try {
+      const peer = new Peer(code);
+      peerRef.current = peer;
 
-    peer.on('open', (id) => {
-      setStatus({ mode: 'sharing-waiting', code: id });
-    });
+      peer.on('open', (id) => {
+        setStatus({ mode: 'sharing-waiting', code: id });
+      });
 
-    peer.on('connection', (conn) => {
-      connectionRef.current = conn;
-      setStatus({ mode: 'sharing-sending', code, progress: 0 });
+      peer.on('connection', (conn) => {
+        connectionRef.current = conn;
+        setStatus({ mode: 'sharing-sending', code, progress: 0 });
 
-      conn.on('open', () => {
-        // 1. Send metadata
-        conn.send({
-          type: 'METADATA',
-          payload: { fileName: file.name, fileSize: file.size, fileType: file.type },
-        } as P2PMessage);
+        conn.on('open', () => {
+          // 1. Send metadata
+          conn.send({
+            type: 'METADATA',
+            payload: { fileName: file.name, fileSize: file.size, fileType: file.type },
+          } as P2PMessage);
 
-        // 2. Send file in chunks
-        const reader = new FileReader();
-        let offset = 0;
+          // 2. Send file in chunks
+          const reader = new FileReader();
+          let offset = 0;
+          
+          reader.onload = (e) => {
+              if (e.target?.result) {
+                  const chunk = e.target.result as ArrayBuffer;
+                  conn.send({ type: 'CHUNK', payload: chunk } as P2PMessage);
+                  offset += chunk.byteLength;
+                  
+                  setStatus(prev => ({ ...prev, mode: 'sharing-sending', code, progress: (offset / file.size) * 100 }));
+                  
+                  if (offset < file.size) {
+                      readSlice(offset);
+                  } else {
+                      conn.send({ type: 'END' } as P2PMessage);
+                      setStatus({ mode: 'sharing-complete', code });
+                  }
+              }
+          };
+
+          const readSlice = (o: number) => {
+              const slice = file.slice(o, o + CHUNK_SIZE);
+              reader.readAsArrayBuffer(slice);
+          };
+
+          readSlice(0);
+        });
         
-        reader.onload = (e) => {
-            if (e.target?.result) {
-                const chunk = e.target.result as ArrayBuffer;
-                conn.send({ type: 'CHUNK', payload: chunk } as P2PMessage);
-                offset += chunk.byteLength;
-                
-                setStatus(prev => ({ ...prev, mode: 'sharing-sending', code, progress: (offset / file.size) * 100 }));
-                
-                if (offset < file.size) {
-                    readSlice(offset);
-                } else {
-                    conn.send({ type: 'END' } as P2PMessage);
-                    setStatus({ mode: 'sharing-complete', code });
-                }
-            }
-        };
-
-        const readSlice = (o: number) => {
-            const slice = file.slice(o, o + CHUNK_SIZE);
-            reader.readAsArrayBuffer(slice);
-        };
-
-        readSlice(0);
+        conn.on('close', () => {
+          setStatus({ mode: 'idle', message: 'Receiver disconnected.' });
+          cleanup();
+        });
       });
-       conn.on('close', () => {
-        setStatus({ mode: 'idle', message: 'Receiver disconnected.' });
-        cleanup();
-      });
-    });
 
-    peer.on('error', (err) => {
-      let message = 'An unknown error occurred.';
-      if (err.type === 'unavailable-id') {
-        message = 'This code is already in use. Please choose another.';
-      } else if (err.type === 'peer-unavailable') {
+      peer.on('error', (err) => {
+        let message = 'An unknown error occurred.';
+        if (err.type === 'unavailable-id') {
+          message = 'This code is already in use. Please choose another.';
+        } else if (err.type === 'peer-unavailable') {
           message = 'Could not find a peer with that code.';
-      }
-      setStatus({ mode: 'error', message });
-      cleanup();
-    });
+        }
+        
+        errorStateRef.current = true;
+        setStatus({ mode: 'error', message });
+        
+        connectionRef.current?.close();
+        peerRef.current?.destroy();
+        connectionRef.current = null;
+        peerRef.current = null;
+        fileChunksRef.current = [];
+      });
 
-     peer.on('disconnected', () => {
-      setStatus({mode: 'idle', message: 'Connection lost. Please try again.'});
-      cleanup();
-    });
+      peer.on('disconnected', () => {
+        // Don't override error states with disconnected message
+        if (!errorStateRef.current) {
+          setStatus({mode: 'idle', message: 'Connection lost. Please try again.'});
+          cleanup();
+        }
+      });
+
+    } catch (error) {
+      errorStateRef.current = true;
+      setStatus({ mode: 'error', message: 'Failed to create connection. Please try again.' });
+    }
 
   }, [cleanup]);
 
   const requestFile = useCallback((code: string) => {
-    cleanup();
-    setReceivedFile(null);
+    // Clean up any existing connections but don't reset status yet
+    connectionRef.current?.close();
+    peerRef.current?.destroy();
+    connectionRef.current = null;
+    peerRef.current = null;
     fileChunksRef.current = [];
+    setReceivedFile(null);
 
     const peer = new Peer();
     peerRef.current = peer;
@@ -151,7 +183,11 @@ const App: React.FC = () => {
             message = 'File not found. The code may be incorrect or the sender is offline.';
         }
         setStatus({ mode: 'error', message });
-        cleanup();
+        connectionRef.current?.close();
+        peerRef.current?.destroy();
+        connectionRef.current = null;
+        peerRef.current = null;
+        fileChunksRef.current = [];
     });
      peer.on('disconnected', () => {
       setStatus({mode: 'idle', message: 'Connection lost. Please try again.'});
@@ -177,7 +213,7 @@ const App: React.FC = () => {
 
         <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <SendPanel onShareFile={shareFile} status={status} onCancel={cleanup}/>
-          <ReceivePanel onFileRequest={requestFile} status={status} receivedFile={receivedFile} />
+          <ReceivePanel onFileRequest={requestFile} status={status} receivedFile={receivedFile} onReset={cleanup} />
         </main>
         
         <footer className="text-center mt-12 text-slate-500 text-sm">

@@ -9,9 +9,10 @@ interface ReceivePanelProps {
   onFileRequest: (code: string) => void;
   status: Status;
   receivedFile: SharedFile | null;
+  onReset?: () => void;
 }
 
-const ReceivePanel: React.FC<ReceivePanelProps> = ({ onFileRequest, status, receivedFile }) => {
+const ReceivePanel: React.FC<ReceivePanelProps> = ({ onFileRequest, status, receivedFile, onReset }) => {
   const [code, setCode] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
@@ -19,6 +20,11 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ onFileRequest, status, rece
     if (code.trim().length === 0) return;
     onFileRequest(code);
     setCode('');
+  };
+
+  const handleTryAgain = () => {
+    setCode('');
+    onReset?.();
   };
 
   const renderContent = () => {
@@ -54,9 +60,17 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ onFileRequest, status, rece
         return (
           <>
             {status.mode === 'error' && (
-              <div className="mb-4 bg-red-900/50 border border-red-500 text-red-300 px-4 py-3 rounded-lg flex items-center">
+              <div className="mb-4 bg-red-900/50 border border-red-500 text-red-300 px-4 py-3 rounded-lg">
+                <div className="flex items-center mb-2">
                   <AlertIcon className="w-5 h-5 mr-3"/>
                   <span>{status.message}</span>
+                </div>
+                <button
+                  onClick={handleTryAgain}
+                  className="text-sm bg-red-600 hover:bg-red-500 px-3 py-1 rounded transition-colors"
+                >
+                  Try Again
+                </button>
               </div>
             )}
             {status.mode === 'idle' && status.message && (
