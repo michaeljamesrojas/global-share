@@ -1,0 +1,13 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="64" fill="#0f172a"/>
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#22d3ee" stroke-width="12"/>
+  <path d="M180 180 L332 180 L332 332 L180 332 Z" fill="none" stroke="#22d3ee" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="180" cy="180" r="16" fill="#22d3ee"/>
+  <circle cx="332" cy="180" r="16" fill="#22d3ee"/>
+  <circle cx="332" cy="332" r="16" fill="#22d3ee"/>
+  <circle cx="180" cy="332" r="16" fill="#22d3ee"/>
+  <path d="M256 200 L256 312" stroke="#f0f9ff" stroke-width="6" stroke-linecap="round"/>
+  <path d="M200 256 L312 256" stroke="#f0f9ff" stroke-width="6" stroke-linecap="round"/>
+  <text x="256" y="120" text-anchor="middle" fill="#22d3ee" font-size="36" font-family="sans-serif" font-weight="bold">SHARE</text>
+  <text x="256" y="420" text-anchor="middle" fill="#22d3ee" font-size="24" font-family="sans-serif">P2P</text>
+</svg>

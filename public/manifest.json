@@ -1,0 +1,20 @@
+{
+  "name": "Tempest Share - Global Clipboard",
+  "short_name": "Tempest Share",
+  "description": "Peer-to-peer file sharing app that works as your temporary global clipboard",
+  "start_url": "/global-share/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#22d3ee",
+  "orientation": "portrait-primary",
+  "scope": "/global-share/",
+  "categories": ["utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/global-share/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

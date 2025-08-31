@@ -3,6 +3,7 @@ import Peer, { DataConnection } from 'peerjs';
 import { P2PMessage, SharedFile, Status } from './types';
 import SendPanel from './components/SendPanel';
 import ReceivePanel from './components/ReceivePanel';
+import InstallPrompt from './components/InstallPrompt';
 
 // Constants for file chunking
 const CHUNK_SIZE = 64 * 1024; // 64KB
@@ -220,6 +221,8 @@ const App: React.FC = () => {
             <p>&copy; {new Date().getFullYear()} Tempest Share. Files are transferred peer-to-peer and are never stored on a server.</p>
         </footer>
       </div>
+      
+      <InstallPrompt />
     </div>
   );
 };
